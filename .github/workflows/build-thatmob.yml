@@ -1,0 +1,47 @@
+name: Build ThatMob Mod
+
+on:
+  push:
+    branches:
+      - chatgpt-spawn-thatmob-build
+    paths:
+      - 'thatmob-build/**'
+      - '.github/workflows/build-thatmob.yml'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java 25
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '25'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '9.5.1'
+
+      - name: Restore project
+        shell: bash
+        run: |
+          mkdir -p thatmob-build/work
+          base64 -d thatmob-build/source.tar.gz.b64 > thatmob-build/work/source.tar.gz
+          tar -xzf thatmob-build/work/source.tar.gz -C thatmob-build/work
+
+      - name: Build
+        shell: bash
+        working-directory: thatmob-build/work/Spawn-thatmob-Fabric-26.2
+        run: gradle build --stacktrace
+
+      - name: Upload jar
+        uses: actions/upload-artifact@v4
+        with:
+          name: spawn-thatmob-1.0.0
+          path: thatmob-build/work/Spawn-thatmob-Fabric-26.2/build/libs/spawn-thatmob-1.0.0.jar
+          if-no-files-found: error
