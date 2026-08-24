@@ -7,6 +7,12 @@ on:
     paths:
       - 'thatmob-build/**'
       - '.github/workflows/build-thatmob.yml'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'thatmob-build/**'
+      - '.github/workflows/build-thatmob.yml'
   workflow_dispatch:
 
 permissions:
@@ -43,11 +49,13 @@ jobs:
         run: gradle build --stacktrace
 
       - name: Save jar as base64
+        if: github.event_name == 'push'
         shell: bash
         run: |
           base64 -w 0 thatmob-build/work/Spawn-thatmob-Fabric-26.2/build/libs/spawn-thatmob-1.0.0.jar > thatmob-build/output.jar.b64
 
       - name: Commit built jar payload
+        if: github.event_name == 'push'
         shell: bash
         run: |
           git config user.name "github-actions[bot]"
@@ -55,3 +63,10 @@ jobs:
           git add thatmob-build/output.jar.b64
           git commit -m "Build ThatMob jar" || exit 0
           git push
+
+      - name: Upload jar
+        uses: actions/upload-artifact@v4
+        with:
+          name: spawn-thatmob-1.0.0
+          path: thatmob-build/work/Spawn-thatmob-Fabric-26.2/build/libs/spawn-thatmob-1.0.0.jar
+          if-no-files-found: error
